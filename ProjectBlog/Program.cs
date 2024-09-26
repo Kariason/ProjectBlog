@@ -16,15 +16,19 @@ namespace ProjectBlog
             var builder = WebApplication.CreateBuilder(args);
             builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
 
+            // Добавление БД
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
             builder.Services
                 .AddDbContext<BlogContext>(options => options.UseNpgsql(connectionString))
-             .AddUnitOfWork()
-                .AddCustomRepository<User, UserRepository>()
-                .AddCustomRepository<Article, ArticleRepository>()
-                .AddCustomRepository<Comment, CommentRepository>()
-                .AddCustomRepository<Tag, TagRepository>()
-                .AddCustomRepository<Role, RoleRepository>(); ;
+
+                .AddUnitOfWork()
+                    .AddCustomRepository<Comment, CommentRepository>()
+                    .AddCustomRepository<Tag, TagRepository>()
+                    .AddCustomRepository<Role, RoleRepository>();
+
+            builder.Services
+                .AddTransient<IUserRepository, UserRepository>()
+                .AddTransient<IArticleRepository, ArticleRepository>();
 
             builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).
                 AddCookie(options =>
@@ -32,12 +36,16 @@ namespace ProjectBlog
                     options.LoginPath = new PathString("/Authenticate");
                 });
 
+            // Добавление сервисов в контейнер
             builder.Services.AddControllersWithViews();
-          
+
+            // NLog: Настройка NLog для внедрения зависимостей
             builder.Logging.ClearProviders();
+           
 
             var app = builder.Build();
 
+            // Настройте конвейера HTTP-запросов.
             if (!app.Environment.IsDevelopment())
             {
                 app.UseExceptionHandler("/Home/Error");
@@ -47,7 +55,6 @@ namespace ProjectBlog
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
-            app.UseMiddleware<ExceptionHandlingMiddleware>();
 
             app.UseRouting();
 

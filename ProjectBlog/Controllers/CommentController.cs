@@ -5,13 +5,14 @@ using ProjectBlog.DAL.Repositories;
 
 namespace ProjectBlog.Controllers
 {
+
     [Authorize]
-    public class CommentController : Controller
+    public class CommentsController : Controller
     {
         private readonly IRepository<Comment> _repo;
-        private readonly ILogger<CommentController> _logger;
+        private readonly ILogger<CommentsController> _logger;
 
-        public CommentController(IRepository<Comment> repo, ILogger<CommentController> logger)
+        public CommentsController(IRepository<Comment> repo, ILogger<CommentsController> logger)
         {
             _repo = repo;
             _logger = logger;

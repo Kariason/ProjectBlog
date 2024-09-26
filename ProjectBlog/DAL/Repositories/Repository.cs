@@ -26,6 +26,7 @@ namespace ProjectBlog.DAL.Repositories
 
         public async Task<T> Get(int id)
         {
+            
             return await Set.FindAsync(id);
         }
 
@@ -34,10 +35,7 @@ namespace ProjectBlog.DAL.Repositories
             return await Set.ToListAsync();
         }
 
-        public User GetByLogin(string login)
-        {
-            return Set.FirstOrDefault(x => (x as User).Email == login) as User;
-        }
+       
 
         public async Task Delete(T item)
         {
@@ -47,15 +45,22 @@ namespace ProjectBlog.DAL.Repositories
 
         public async Task Update(T item)
         {
-            Set.Update(item);
-            await _db.SaveChangesAsync();
+            var existingItem = await Set.FindAsync(GetKeyValue(item));
+
+            if (existingItem != null)
+            {
+                _db.Entry(existingItem).CurrentValues.SetValues(item);
+                await _db.SaveChangesAsync();
+            }
         }
 
-        public async Task Update(T item, T newItem)
+        private object GetKeyValue(T item)
         {
-            item = newItem;
-            Set.Update(item);
-            await _db.SaveChangesAsync();
+            var key = _db.Model.FindEntityType(typeof(T)).FindPrimaryKey().Properties.FirstOrDefault();
+            return item.GetType().GetProperty(key.Name).GetValue(item);
         }
+
+      
     }
 }
+

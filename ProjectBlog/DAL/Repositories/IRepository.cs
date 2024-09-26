@@ -7,7 +7,6 @@ namespace ProjectBlog.DAL.Repositories
         Task Add(T item);
         Task<T> Get(int id);
         Task<IEnumerable<T>> GetAll();
-        User GetByLogin(string login);
         Task Update(T item);
         Task Delete(T item);
 

@@ -7,15 +7,17 @@ using ProjectBlog.DAL.Entities;
 namespace ProjectBlog.Controllers
 {
     [Authorize]
-    public class ArticleController : Controller
+    public class ArticlesController : Controller
     {
-        private readonly IRepository<Article> _repo;
-        private readonly IRepository<User> _userRepo;
-        private readonly ILogger<ArticleController> _logger;
+        private readonly IArticleRepository _articleRepo;
+        private readonly IRepository<Tag> _tagRepo;
+        private readonly IUserRepository _userRepo;
+        private readonly ILogger<ArticlesController> _logger;
 
-        public ArticleController(IRepository<Article> repo, IRepository<User> user_repo, ILogger<ArticleController> logger)
+        public ArticlesController(IArticleRepository article_repo, IRepository<Tag> tag_repo, IUserRepository user_repo, ILogger<ArticlesController> logger)
         {
-            _repo = repo;
+            _articleRepo = article_repo;
+            _tagRepo = tag_repo;
             _userRepo = user_repo;
             _logger = logger;
             _logger.LogDebug(1, "NLog подключен к ArtController");
@@ -24,36 +26,49 @@ namespace ProjectBlog.Controllers
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            var articles = await _repo.GetAll();
+            var articles = await _articleRepo.GetAll();
             _logger.LogInformation("ArticlesController - Index");
             return View(articles);
         }
 
         [HttpGet]
-        public IActionResult Add()
+        public async Task<IActionResult> AddArticle()
         {
+            var tags = await _tagRepo.GetAll();
             _logger.LogInformation("ArticlesController - Add");
-            return View();
+            return View(new AddArticleView() { Tags = tags.ToList() });            
         }
 
         [HttpPost]
-        public async Task<IActionResult> Add(Article newArticle)
+        public async Task<IActionResult> AddArticle(AddArticleView model, List<int> SelectedTags)
         {
             // Получаем логин текущего пользователя из контекста сессии
             string? currentUserLogin = User?.Identity?.Name;
             var user = _userRepo.GetByLogin(currentUserLogin);
 
-            newArticle.UserId = user.Id;
-            newArticle.User = user;
-            await _repo.Add(newArticle);
+            var tags = new List<Tag>();
+
+            SelectedTags.ForEach(async id => tags.Add(await _tagRepo.Get(id)));
+
+            var article = new Article
+            {
+                UserId = user.Id,
+                User = user,
+                ArticleDate = DateTimeOffset.UtcNow,
+                Title = model.Title,
+                Content = model.Content,
+                Tags = tags
+            };
+
+            await _articleRepo.Add(article);
             _logger.LogInformation("ArticlesController - Add - complete");
-            return View(newArticle);
+            return RedirectToAction("Index");
         }
 
         [HttpGet]
         public async Task<IActionResult> GetArticleById(int id)
         {
-            var article = await _repo.Get(id);
+            var article = await _articleRepo.Get(id);
             _logger.LogInformation("ArticlesController - GetArticleById");
             return View(article);
         }
@@ -68,8 +83,8 @@ namespace ProjectBlog.Controllers
         [HttpPost]
         public async Task<IActionResult> Delete(int id)
         {
-            var article = await _repo.Get(id);
-            await _repo.Delete(article);
+            var article = await _articleRepo.Get(id);
+            await _articleRepo.Delete(article);
             _logger.LogInformation("ArticlesController - Delete - complete");
             return RedirectToAction("Index", "Articles");
         }
@@ -77,20 +92,39 @@ namespace ProjectBlog.Controllers
         [HttpGet]
         public async Task<IActionResult> Update(int id)
         {
-            var article = await _repo.Get(id);
+            var article = await _articleRepo.Get(id);
+            var tags = await _tagRepo.GetAll();
             _logger.LogInformation("ArticlesController - Update");
-            return View(article);
+            
+            return View(new EditArticleView() {
+                Id = article.Id,
+                Title = article.Title,
+                Content = article.Content,
+                TagsSelected = article.Tags.ToList(),
+                Tags = tags.ToList() });            
         }
 
         [HttpPost]
-        public async Task<IActionResult> ConfirmUpdating(Article article)
+        public async Task<IActionResult> ConfirmUpdating(EditArticleView model, List<int> SelectedTags)
         {
             string? currentUserLogin = User?.Identity?.Name;
             var user = _userRepo.GetByLogin(currentUserLogin);
 
-            article.UserId = user.Id;
-            article.User = user;
-            await _repo.Update(article);
+            var tags = new List<Tag>();
+            SelectedTags.ForEach(async id => tags.Add(await _tagRepo.Get(id)));
+
+            var article = new Article
+            {
+                Id = model.Id,
+                UserId = user.Id,
+                User = user,
+                ArticleDate = DateTimeOffset.UtcNow,
+                Title = model.Title,
+                Content = model.Content,
+                Tags = tags                
+            };
+
+            await _articleRepo.Update(article);
             _logger.LogInformation("ArticlesController - Update - complete");
             return RedirectToAction("Index", "Articles");
         }

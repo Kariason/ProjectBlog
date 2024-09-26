@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ProjectBlog.DAL.Entities
 {
@@ -30,7 +31,9 @@ namespace ProjectBlog.DAL.Entities
         [StringLength(50, ErrorMessage = "Хотя бы 3 символа, пожалуйста")]
         public string? Password { get; set; }
 
-        public int RoleId { get; set; } = 1;
+        public int RoleId { get; set; } = 3;
+
+        [ForeignKey("UserId")]
 
         public List<Role> Roles { get; set; } = new List<Role>();
         public List<Comment> Comments { get; set; } = new List<Comment>();

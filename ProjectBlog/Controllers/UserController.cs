@@ -11,10 +11,10 @@ namespace ProjectBlog.Controllers
 {
     public class UsersController : Controller
     {
-        private readonly IRepository<User> _repo;
+        private readonly IUserRepository _repo;
         private readonly ILogger<UsersController> _logger;
 
-        public UsersController(IRepository<User> repo, ILogger<UsersController> logger)
+        public UsersController(IUserRepository repo, ILogger<UsersController> logger)
         {
             _repo = repo;
             _logger = logger;
@@ -37,6 +37,7 @@ namespace ProjectBlog.Controllers
                 throw new ArgumentNullException("Некорректные данные");
 
             User user = _repo.GetByLogin(email);
+            
             if (user is null)
                 throw new AuthenticationException("Пользователь на найден");
 
@@ -66,6 +67,7 @@ namespace ProjectBlog.Controllers
             return RedirectToAction("Index", "Home");
         }
 
+        // Получить всех пользователей
         [Authorize]
         [HttpGet]
         public async Task<IActionResult> Index()
@@ -75,6 +77,7 @@ namespace ProjectBlog.Controllers
             return View(users);
         }
 
+        // Получить пользователя
         [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetUserById(int id)
@@ -84,6 +87,7 @@ namespace ProjectBlog.Controllers
             return View(user);
         }
 
+        // Регистрация
         [HttpGet]
         [Route("Register")]
         public IActionResult Register()
@@ -92,6 +96,7 @@ namespace ProjectBlog.Controllers
             return View();
         }
 
+       
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Route("Register")]
@@ -102,12 +107,13 @@ namespace ProjectBlog.Controllers
                 await _repo.Add(newUser);
                 _logger.LogInformation("UsersController - Register - complete");
                 return View(newUser);
-
+               
             }
             return View(newUser);
         }
 
-        [Authorize(Roles = "Admin")]
+        //Редактировать пользователя
+        [Authorize(Roles = "3")]
         [HttpGet]
         [Route("Update")]
         public async Task<IActionResult> Update(int id)
@@ -117,6 +123,7 @@ namespace ProjectBlog.Controllers
             return View(user);
         }
 
+        
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -127,6 +134,7 @@ namespace ProjectBlog.Controllers
             return RedirectToAction("Index", "Users");
         }
 
+        // Удалить пользователя
         [Authorize]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
