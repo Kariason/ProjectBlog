@@ -1,12 +1,13 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using ProjectBlog.Models;
-using ProjectBlog.DAL.Repositories;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using ProjectBlog.DAL.Entities;
+using ProjectBlog.DAL.Repositories;
+using System.Collections.Generic;
 
-namespace ProjectBlog.Controllers
+namespace API.Controllers
 {
-    [Authorize]
+    [ApiController]
+    [Route("[controller]")]
     public class ArticlesController : Controller
     {
         private readonly IArticleRepository _articleRepo;
@@ -23,7 +24,7 @@ namespace ProjectBlog.Controllers
             _logger.LogDebug(1, "NLog подключен к ArtController");
         }
 
-        [HttpGet]
+        [HttpGet("{index}")]
         public async Task<IActionResult> Index()
         {
             var articles = await _articleRepo.GetAll();
@@ -31,7 +32,7 @@ namespace ProjectBlog.Controllers
             return View(articles);
         }
 
-        [HttpGet]
+        [HttpGet("{getarticle}")]
         public async Task<IActionResult> AddArticle()
         {
             var tags = await _tagRepo.GetAll();
@@ -39,7 +40,7 @@ namespace ProjectBlog.Controllers
             return View(new AddArticleView() { Tags = tags.ToList() });
         }
 
-        [HttpPost]
+        [HttpPost("{addarticle}")]
         public async Task<IActionResult> AddArticle(AddArticleView model)
         {
             // Получаем логин текущего пользователя из контекста сессии
@@ -65,7 +66,7 @@ namespace ProjectBlog.Controllers
             return RedirectToAction("Index");
         }
 
-        [HttpGet]
+        [HttpGet("{viewarticle}")]
         public async Task<IActionResult> ViewArticle(int id)
         {
             var article = await _articleRepo.Get(id);
@@ -73,14 +74,14 @@ namespace ProjectBlog.Controllers
             return View(article);
         }
 
-        [HttpGet]
+        [HttpGet("{getarticletodel}")]
         public IActionResult Delete()
         {
             _logger.LogInformation("ArticlesController - Delete");
             return View();
         }
 
-        [HttpPost]
+        [HttpPost("{deletearticle}")]
         public async Task<IActionResult> Delete(int id)
         {
             var article = await _articleRepo.Get(id);
@@ -89,7 +90,7 @@ namespace ProjectBlog.Controllers
             return RedirectToAction("Index", "Articles");
         }
 
-        [HttpGet]
+        [HttpGet("{upd}")]
         public async Task<IActionResult> Update(int id)
         {
             var article = await _articleRepo.Get(id);

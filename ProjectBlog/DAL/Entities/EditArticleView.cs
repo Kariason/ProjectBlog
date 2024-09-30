@@ -20,5 +20,7 @@ namespace ProjectBlog.DAL.Entities
         public IList<Tag>? TagsSelected { get; set; }
 
         public IList<Tag>? Tags { get; set; }
+
+        public List<int>? SelectedTags { get; set; }
     }
 }
